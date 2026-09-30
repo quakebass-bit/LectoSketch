@@ -1,0 +1,1060 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LectoSketch</title>
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;600&family=Merriweather:wght@300;400;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <style>
+    :root {
+      --bg-main: #ffffff;
+      --bg-toolbar: #f8fafc;
+      --text-main: #0f172a;
+      --border-color: #e2e8f0;
+      --btn-hover: #f1f5f9;
+      --table-border: #cbd5e1;
+    }
+
+    body.theme-dark {
+      --bg-main: #0f172a;
+      --bg-toolbar: #1e293b;
+      --text-main: #f8fafc;
+      --border-color: #334155;
+      --btn-hover: #334155;
+      --table-border: #475569;
+    }
+
+    body.theme-sepia {
+      --bg-main: #fbf8f2;
+      --bg-toolbar: #f4ede2;
+      --text-main: #433222;
+      --border-color: #e3d4c1;
+      --btn-hover: #e3d4c1;
+      --table-border: #d6c7b3;
+    }
+
+    body {
+      background-color: var(--bg-main);
+      color: var(--text-main);
+      font-family: 'Inter', sans-serif;
+      transition: background-color 0.2s, color 0.2s;
+      margin: 0;
+      padding: 0;
+    }
+
+    /* Editor Styling */
+    #editor {
+      min-height: calc(100vh - 140px);
+      outline: none;
+      padding: 3rem 2rem;
+      max-width: 900px;
+      margin: 0 auto;
+      font-size: 1.125rem;
+      line-height: 1.7;
+    }
+    #editor h1 { font-size: 2.25rem; font-weight: 700; margin-bottom: 1rem; line-height: 1.2; }
+    #editor h2 { font-size: 1.75rem; font-weight: 600; margin-bottom: 0.75rem; line-height: 1.3; }
+    #editor p { margin-bottom: 1rem; }
+
+    /* Dynamic Tables */
+    #editor table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 1.5rem 0;
+    }
+    #editor th, #editor td {
+      border: 1px solid var(--table-border);
+      padding: 0.75rem;
+      min-width: 50px;
+      position: relative;
+      vertical-align: top;
+    }
+
+    /* Resizable & Draggable Image Container */
+    .resizable-img-wrapper {
+      position: relative;
+      display: inline-block;
+      margin: 0.5rem 0;
+      line-height: 0;
+      border: 1px dashed transparent;
+      user-select: none;
+      vertical-align: middle;
+      max-width: 100%;
+      cursor: grab;
+    }
+    .resizable-img-wrapper:active {
+      cursor: grabbing;
+    }
+    .resizable-img-wrapper.is-dragging {
+      opacity: 0.4;
+    }
+    .resizable-img-wrapper:hover,
+    .resizable-img-wrapper.active-resizing {
+      border-color: #3b82f6;
+    }
+    .resizable-img-wrapper img {
+      display: block;
+      width: 100%;
+      height: auto;
+      border-radius: 6px;
+      box-shadow: 0 2px 6px -1px rgba(0,0,0,0.1);
+      pointer-events: none; /* Передает драг на обертку */
+    }
+    .resizable-img-wrapper .resize-handle {
+      position: absolute;
+      right: -5px;
+      bottom: -5px;
+      width: 12px;
+      height: 12px;
+      background: #3b82f6;
+      border: 2px solid #ffffff;
+      border-radius: 3px;
+      cursor: nwse-resize;
+      display: none;
+      z-index: 20;
+    }
+    .resizable-img-wrapper:hover .resize-handle,
+    .resizable-img-wrapper.active-resizing .resize-handle {
+      display: block;
+    }
+    .resizable-img-wrapper .btn-remove-img {
+      position: absolute;
+      top: -8px;
+      right: -8px;
+      background: #ef4444;
+      color: #ffffff;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      cursor: pointer;
+      z-index: 20;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+    }
+    .resizable-img-wrapper:hover .btn-remove-img {
+      display: flex;
+    }
+
+    /* Smart Sketch Container */
+    .sketch-container {
+      position: relative;
+      display: inline-block;
+      margin: 1rem 0;
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      background: #fff;
+      box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+      user-select: none;
+    }
+    .sketch-container img {
+      display: block;
+      max-width: 100%;
+      height: auto;
+      border-radius: 8px;
+      pointer-events: auto;
+    }
+    
+    /* Floating Text inside Sketch */
+    .floating-text {
+      position: absolute;
+      min-width: 60px;
+      max-width: calc(100% - 20px);
+      min-height: 24px;
+      padding: 2px 6px;
+      color: #000;
+      font-family: 'Inter', sans-serif;
+      font-size: 1rem;
+      line-height: 1.3;
+      background: rgba(255, 255, 255, 0.9);
+      border: 1px dashed #3b82f6;
+      border-radius: 4px;
+      cursor: text;
+      white-space: pre-wrap;
+      word-break: break-word;
+      z-index: 10;
+      user-select: text;
+    }
+    .floating-text:hover, .floating-text:focus {
+      border-color: #2563eb;
+      background: #ffffff;
+      outline: none;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .floating-text:empty::before {
+      content: 'Текст...';
+      color: #94a3b8;
+      pointer-events: none;
+    }
+
+    /* Audio Note Chip */
+    .audio-note-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: #f1f5f9;
+      border: 1px solid #cbd5e1;
+      border-radius: 9999px;
+      padding: 4px 12px;
+      margin: 4px 4px;
+      vertical-align: middle;
+      user-select: none;
+      font-size: 0.875rem;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+    }
+    body.theme-dark .audio-note-chip {
+      background: #1e293b;
+      border-color: #475569;
+      color: #f8fafc;
+    }
+    body.theme-sepia .audio-note-chip {
+      background: #f4ede2;
+      border-color: #d6c7b3;
+      color: #433222;
+    }
+    .audio-note-chip audio {
+      height: 28px;
+      outline: none;
+      max-width: 210px;
+    }
+    .audio-note-chip .delete-audio-btn {
+      color: #94a3b8;
+      cursor: pointer;
+      font-weight: bold;
+      margin-left: 2px;
+      transition: color 0.15s;
+    }
+    .audio-note-chip .delete-audio-btn:hover {
+      color: #ef4444;
+    }
+
+    /* Toolbar Elements */
+    .tb-btn {
+      padding: 0.4rem 0.6rem;
+      border-radius: 0.375rem;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      color: var(--text-main);
+      border: 1px solid transparent;
+      background: transparent;
+      font-size: 0.9rem;
+      font-weight: 500;
+      transition: all 0.1s;
+    }
+    .tb-btn:hover { background-color: var(--btn-hover); border-color: var(--border-color); }
+    
+    .color-btn {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      border: 2px solid var(--border-color);
+      cursor: pointer;
+      transition: transform 0.1s;
+    }
+    .color-btn:hover { transform: scale(1.2); }
+    .color-clear { background: repeating-linear-gradient(45deg, #fff, #fff 4px, #ff4444 4px, #ff4444 5px); }
+
+    /* Table Grid UI */
+    .grid-picker {
+      display: grid;
+      grid-template-columns: repeat(10, 18px);
+      gap: 2px;
+      padding: 8px;
+    }
+    .grid-cell { width: 18px; height: 18px; border: 1px solid #cbd5e1; border-radius: 2px; cursor: pointer; }
+    .grid-cell.active { background-color: #3b82f6; border-color: #2563eb; }
+
+    /* Canvas Modal */
+    #sketch-modal { display: none; }
+    #sketch-modal.active { display: flex; }
+  </style>
+</head>
+<body class="theme-light">
+
+  <header class="sticky top-0 z-40 border-b shadow-sm" style="background-color: var(--bg-toolbar); border-color: var(--border-color);">
+    <div class="max-w-6xl mx-auto px-4 py-2 flex flex-wrap items-center gap-2">
+      
+      <!-- File Name & Actions -->
+      <div class="flex items-center gap-1 border-r pr-2" style="border-color: var(--border-color);">
+        <input type="text" id="doc-title" class="px-2 py-1 text-sm rounded border outline-none font-medium w-48 transition" style="background-color: var(--bg-main); border-color: var(--border-color); color: var(--text-main);" placeholder="Имя файла..." title="Имя сохраняемого файла" />
+        <button id="btn-save" class="tb-btn" title="Save File"><svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"></path></svg>Save</button>
+        <button id="btn-load" class="tb-btn" title="Load File"><svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>Load</button>
+        <input type="file" id="file-input" accept=".omni,.json" class="hidden" />
+        
+        <select id="theme-select" class="ml-1 px-2 py-1 rounded outline-none border cursor-pointer text-sm" style="background-color: var(--bg-main); border-color: var(--border-color); color: var(--text-main);">
+          <option value="light">Light</option>
+          <option value="dark">Dark</option>
+          <option value="sepia">Sepia</option>
+        </select>
+      </div>
+
+      <!-- History -->
+      <div class="flex items-center gap-1 border-r pr-2" style="border-color: var(--border-color);">
+        <button id="btn-undo" class="tb-btn" title="Undo (Ctrl+Z)"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"></path></svg></button>
+        <button id="btn-redo" class="tb-btn" title="Redo (Ctrl+Y)"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 10h-10a8 8 0 00-8 8v2M21 10l-6 6m6-6l-6-6"></path></svg></button>
+      </div>
+
+      <!-- Headings & Text Styles -->
+      <div class="flex items-center gap-1 border-r pr-2" style="border-color: var(--border-color);">
+        <button data-cmd="formatBlock" data-val="<h1>" class="tb-btn font-bold" title="Heading 1">H1</button>
+        <button data-cmd="formatBlock" data-val="<h2>" class="tb-btn font-bold" title="Heading 2">H2</button>
+        <button data-cmd="formatBlock" data-val="<p>" class="tb-btn" title="Normal Text">P</button>
+        
+        <select id="font-select" class="ml-1 px-2 py-1 rounded outline-none border cursor-pointer text-sm w-28" style="background-color: var(--bg-main); border-color: var(--border-color); color: var(--text-main);" title="Apply font to selection">
+          <option value="Arial">Font...</option>
+          <option value="Inter">Inter (Sans)</option>
+          <option value="Merriweather">Serif</option>
+          <option value="'JetBrains Mono'">JetBrains</option>
+        </select>
+
+        <button data-cmd="bold" class="tb-btn font-bold ml-1" title="Bold (Ctrl+B)">B</button>
+        <button data-cmd="italic" class="tb-btn italic font-serif" title="Italic (Ctrl+I)">I</button>
+        <button data-cmd="underline" class="tb-btn underline" title="Underline (Ctrl+U)">U</button>
+      </div>
+
+      <!-- Highlighters -->
+      <div class="flex items-center gap-2 border-r pr-2" style="border-color: var(--border-color);">
+        <button class="color-btn bg-yellow-300" data-hl="#fdf08a" title="Yellow Highlight"></button>
+        <button class="color-btn bg-green-300" data-hl="#bbf7d0" title="Green Highlight"></button>
+        <button class="color-btn bg-pink-300" data-hl="#fbcfe8" title="Pink Highlight"></button>
+        <button class="color-btn color-clear" data-hl="transparent" title="Clear Highlight"></button>
+      </div>
+
+      <!-- Inserts -->
+      <div class="flex items-center gap-1 relative">
+        <button id="btn-table-toggle" class="tb-btn gap-1">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
+          Table
+        </button>
+        
+        <div id="table-dropdown" class="hidden absolute top-full left-0 mt-1 bg-white border border-slate-200 shadow-xl rounded-lg z-50 p-2 dark:bg-slate-800 dark:border-slate-700">
+          <div id="table-grid" class="grid-picker"></div>
+          <div id="table-size-label" class="text-center text-sm mt-2 text-slate-500 font-medium">1 x 1</div>
+        </div>
+
+        <button id="btn-sketch" class="tb-btn gap-1 text-blue-600 dark:text-blue-400">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
+          Sketch
+        </button>
+
+        <!-- Аудиозаметка -->
+        <button id="btn-audio-record" class="tb-btn gap-1 text-red-600 dark:text-red-400 hover:text-red-700 transition" title="Вставить аудиозаметку в позицию курсора">
+          <svg id="mic-icon" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 003-3V5a3 3 0 00-6 0v6a3 3 0 003 3z"></path>
+          </svg>
+          <span id="audio-record-label">Audio</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Editor Area -->
+  <main>
+    <div id="editor" contenteditable="true" spellcheck="false">
+      <h1>Lecture Notes</h1>
+      <p>Begin typing here...</p>
+    </div>
+  </main>
+
+  <!-- Sketch Modal Overlay -->
+  <div id="sketch-modal" class="fixed inset-0 bg-black/60 z-50 items-center justify-center backdrop-blur-sm">
+    <div class="bg-white rounded-xl shadow-2xl overflow-hidden flex flex-col" style="width: 800px; max-width: 95vw; height: 600px; max-height: 90vh;">
+      
+      <!-- Canvas Header Tools -->
+      <div class="bg-slate-100 border-b border-slate-200 p-3 flex justify-between items-center text-slate-800">
+        <div class="flex gap-4 items-center">
+          <span class="font-bold text-sm">Sketch Tools</span>
+          <div class="flex gap-2">
+            <button class="sketch-tool active p-1 border rounded bg-white shadow-sm" data-tool="pen" title="Pen">🖌</button>
+            <button class="sketch-tool p-1 border rounded hover:bg-white" data-tool="eraser" title="Eraser">🧼</button>
+          </div>
+          <div class="flex gap-1 ml-2">
+            <input type="color" id="sketch-color" value="#000000" class="w-6 h-6 border-0 p-0 cursor-pointer rounded" />
+            <input type="range" id="sketch-size" min="1" max="20" value="3" class="w-24 cursor-pointer" />
+          </div>
+        </div>
+        <div class="flex gap-2">
+          <button id="btn-sketch-cancel" class="px-4 py-1.5 rounded text-sm font-medium hover:bg-slate-200 transition">Cancel</button>
+          <button id="btn-sketch-insert" class="px-4 py-1.5 bg-blue-600 text-white rounded text-sm font-medium hover:bg-blue-700 transition">Insert to Note</button>
+        </div>
+      </div>
+      
+      <!-- Canvas Area -->
+      <div class="flex-1 bg-white relative cursor-crosshair overflow-hidden" id="canvas-container">
+        <canvas id="sketch-canvas" width="800" height="550" class="block"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const editor = document.getElementById('editor');
+    const docTitleInput = document.getElementById('doc-title');
+
+    function initDefaultTitle() {
+      const now = new Date();
+      const year = now.getFullYear();
+      const month = String(now.getMonth() + 1).padStart(2, '0');
+      const day = String(now.getDate()).padStart(2, '0');
+      docTitleInput.value = `${year}-${month}-${day} - `;
+    }
+    initDefaultTitle();
+
+    // Custom History Stack
+    let historyStack = [];
+    let historyIndex = -1;
+    let isUndoing = false;
+
+    function saveState() {
+      if (isUndoing) return;
+      const content = editor.innerHTML;
+      if (historyIndex === -1 || historyStack[historyIndex] !== content) {
+        historyStack = historyStack.slice(0, historyIndex + 1);
+        historyStack.push(content);
+        historyIndex++;
+        if (historyStack.length > 50) {
+          historyStack.shift();
+          historyIndex--;
+        }
+      }
+    }
+
+    function undo() {
+      if (historyIndex > 0) {
+        isUndoing = true;
+        historyIndex--;
+        editor.innerHTML = historyStack[historyIndex];
+        attachDynamicEventListeners();
+        setTimeout(() => isUndoing = false, 10);
+      }
+    }
+
+    function redo() {
+      if (historyIndex < historyStack.length - 1) {
+        isUndoing = true;
+        historyIndex++;
+        editor.innerHTML = historyStack[historyIndex];
+        attachDynamicEventListeners();
+        setTimeout(() => isUndoing = false, 10);
+      }
+    }
+
+    document.getElementById('btn-undo').addEventListener('click', undo);
+    document.getElementById('btn-redo').addEventListener('click', redo);
+    
+    editor.addEventListener('input', (e) => {
+      if (e.target.classList && e.target.classList.contains('floating-text')) return;
+      clearTimeout(editor.saveTimeout);
+      editor.saveTimeout = setTimeout(saveState, 400);
+    });
+
+    saveState();
+
+    // Selection helpers
+    let savedRange = null;
+    function saveSelection() {
+      const sel = window.getSelection();
+      if (sel.rangeCount > 0 && editor.contains(sel.anchorNode)) {
+        savedRange = sel.getRangeAt(0);
+      }
+    }
+    
+    document.addEventListener('selectionchange', saveSelection);
+    editor.addEventListener('keyup', saveSelection);
+    editor.addEventListener('mouseup', saveSelection);
+
+    function restoreSelection() {
+      if (savedRange) {
+        const sel = window.getSelection();
+        sel.removeAllRanges();
+        sel.addRange(savedRange);
+      }
+    }
+
+    // Formatting Buttons (execCommand)
+    document.querySelectorAll('[data-cmd]').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.preventDefault();
+        const cmd = btn.getAttribute('data-cmd');
+        const val = btn.getAttribute('data-val') || null;
+        
+        document.execCommand('styleWithCSS', false, true);
+        document.execCommand(cmd, false, val);
+        
+        editor.focus();
+        saveState();
+      });
+    });
+
+    // Font Selection
+    document.getElementById('font-select').addEventListener('change', (e) => {
+      const font = e.target.value;
+      if (font !== "Arial") {
+        document.execCommand('styleWithCSS', false, true);
+        document.execCommand('fontName', false, font);
+        e.target.value = "Arial";
+        saveState();
+      }
+    });
+
+    // Highlighters
+    document.querySelectorAll('.color-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.preventDefault();
+        const color = btn.getAttribute('data-hl');
+        document.execCommand('styleWithCSS', false, true);
+        document.execCommand('hiliteColor', false, color);
+        saveState();
+      });
+    });
+
+    // Theme Switcher
+    const themeSelect = document.getElementById('theme-select');
+    themeSelect.addEventListener('change', (e) => {
+      document.body.className = `theme-${e.target.value}`;
+    });
+
+    // File I/O
+    document.getElementById('btn-save').addEventListener('click', () => {
+      const title = docTitleInput.value.trim() || 'notebook';
+      const filename = title.endsWith('.omni') ? title : `${title}.omni`;
+      
+      const data = {
+        title: docTitleInput.value,
+        theme: themeSelect.value,
+        content: editor.innerHTML
+      };
+      const blob = new Blob([JSON.stringify(data)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      a.click();
+      URL.revokeObjectURL(url);
+    });
+
+    document.getElementById('btn-load').addEventListener('click', () => {
+      document.getElementById('file-input').click();
+    });
+
+    document.getElementById('file-input').addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function(evt) {
+        try {
+          const data = JSON.parse(evt.target.result);
+          if (data.title !== undefined) {
+            docTitleInput.value = data.title;
+          }
+          if (data.theme) {
+            themeSelect.value = data.theme;
+            document.body.className = `theme-${data.theme}`;
+          }
+          if (data.content) {
+            editor.innerHTML = data.content;
+            historyStack = [];
+            historyIndex = -1;
+            attachDynamicEventListeners();
+            saveState();
+          }
+        } catch(err) {
+          alert("Invalid file format.");
+        }
+      };
+      reader.readAsText(file);
+    });
+
+    // Shortcuts
+    document.addEventListener('keydown', (e) => {
+      if (e.ctrlKey && e.key === 'z') { e.preventDefault(); undo(); }
+      if (e.ctrlKey && e.key === 'y') { e.preventDefault(); redo(); }
+    });
+
+    // Tables Logic
+    const tableBtn = document.getElementById('btn-table-toggle');
+    const tableDropdown = document.getElementById('table-dropdown');
+    const tableGrid = document.getElementById('table-grid');
+    const tableLabel = document.getElementById('table-size-label');
+    
+    tableBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      tableDropdown.classList.toggle('hidden');
+    });
+    
+    document.addEventListener('click', (e) => {
+      if (!tableDropdown.contains(e.target) && e.target !== tableBtn) {
+        tableDropdown.classList.add('hidden');
+      }
+    });
+
+    for (let r = 0; r < 10; r++) {
+      for (let c = 0; c < 10; c++) {
+        const cell = document.createElement('div');
+        cell.className = 'grid-cell';
+        cell.dataset.r = r + 1;
+        cell.dataset.c = c + 1;
+        
+        cell.addEventListener('mouseover', () => highlightGrid(r + 1, c + 1));
+        cell.addEventListener('click', () => insertTable(r + 1, c + 1));
+        
+        tableGrid.appendChild(cell);
+      }
+    }
+
+    function highlightGrid(rows, cols) {
+      tableLabel.textContent = `${cols} x ${rows}`;
+      Array.from(tableGrid.children).forEach(cell => {
+        const r = parseInt(cell.dataset.r);
+        const c = parseInt(cell.dataset.c);
+        if (r <= rows && c <= cols) cell.classList.add('active');
+        else cell.classList.remove('active');
+      });
+    }
+
+    function insertTable(rows, cols) {
+      tableDropdown.classList.add('hidden');
+      restoreSelection();
+      
+      let html = '<table><tbody>';
+      for (let r = 0; r < rows; r++) {
+        html += '<tr>';
+        for (let c = 0; c < cols; c++) {
+          html += `<td><br></td>`;
+        }
+        html += '</tr>';
+      }
+      html += '</tbody></table><p><br></p>';
+      
+      document.execCommand('insertHTML', false, html);
+      saveState();
+    }
+
+    // ========================================================
+    // ВСТАВКА, РЕСАЙЗ И ПЕРЕМЕЩЕНИЕ ИЗОБРАЖЕНИЙ (DRAG & DROP МЕЖДУ ЯЧЕЙКАМИ)
+    // ========================================================
+    let draggedImageWrapper = null;
+
+    function makeImageWrapperDraggable(wrapper) {
+      wrapper.setAttribute('draggable', 'true');
+      wrapper.setAttribute('contenteditable', 'false');
+
+      wrapper.addEventListener('dragstart', (e) => {
+        // Если пользователь тянет за маркер изменения размера, не начинаем перенос
+        if (wrapper.classList.contains('active-resizing')) {
+          e.preventDefault();
+          return;
+        }
+        draggedImageWrapper = wrapper;
+        wrapper.classList.add('is-dragging');
+        e.dataTransfer.effectAllowed = 'move';
+        e.dataTransfer.setData('text/plain', 'internal-image');
+      });
+
+      wrapper.addEventListener('dragend', () => {
+        wrapper.classList.remove('is-dragging');
+        draggedImageWrapper = null;
+      });
+    }
+
+    function insertResizableImage(src) {
+      restoreSelection();
+
+      const tempImg = new Image();
+      tempImg.onload = function() {
+        const initialWidth = Math.min(tempImg.naturalWidth || 350, 450);
+        const html = `
+          <div class="resizable-img-wrapper" draggable="true" contenteditable="false" style="width: ${initialWidth}px;">
+            <img src="${src}" alt="Image" />
+            <div class="resize-handle" title="Потяните для изменения размера"></div>
+            <div class="btn-remove-img" title="Удалить картинку">&times;</div>
+          </div>
+        `;
+        document.execCommand('insertHTML', false, html);
+        attachDynamicEventListeners();
+        saveState();
+      };
+      tempImg.src = src;
+    }
+
+    // Обработка Paste скриншотов через Ctrl+V
+    editor.addEventListener('paste', (e) => {
+      const clipboardData = e.clipboardData || window.clipboardData;
+      if (!clipboardData) return;
+
+      const items = clipboardData.items;
+      for (let i = 0; i < items.length; i++) {
+        if (items[i].type.indexOf('image') !== -1) {
+          e.preventDefault();
+          const file = items[i].getAsFile();
+          const reader = new FileReader();
+          reader.onload = (event) => {
+            insertResizableImage(event.target.result);
+          };
+          reader.readAsDataURL(file);
+          return;
+        }
+      }
+    });
+
+    // Обработка Drag & Drop (включая перенос картинок между ячейками таблицы)
+    editor.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+    });
+
+    editor.addEventListener('drop', (e) => {
+      // 1. Если перемещаем существующую картинку внутри документа/таблицы
+      if (draggedImageWrapper) {
+        e.preventDefault();
+
+        // Проверяем, бросили ли картинку в ячейку таблицы (td или th)
+        const cell = e.target.closest('td, th');
+        if (cell) {
+          cell.appendChild(draggedImageWrapper);
+        } else {
+          // Если бросили в обычный текст
+          let range = null;
+          if (document.caretRangeFromPoint) {
+            range = document.caretRangeFromPoint(e.clientX, e.clientY);
+          } else if (e.rangeParent) {
+            range = document.createRange();
+            range.setStart(e.rangeParent, e.rangeOffset);
+            range.collapse(true);
+          }
+
+          if (range && editor.contains(range.commonAncestorContainer)) {
+            range.insertNode(draggedImageWrapper);
+          } else {
+            editor.appendChild(draggedImageWrapper);
+          }
+        }
+        
+        saveState();
+        return;
+      }
+
+      // 2. Если перетащили картинку из проводника/файловой системы
+      const files = e.dataTransfer.files;
+      if (files && files.length > 0 && files[0].type.startsWith('image/')) {
+        e.preventDefault();
+        
+        // Помещаем курсор туда, куда бросили файл
+        if (document.caretRangeFromPoint) {
+          const range = document.caretRangeFromPoint(e.clientX, e.clientY);
+          if (range) {
+            const sel = window.getSelection();
+            sel.removeAllRanges();
+            sel.addRange(range);
+          }
+        }
+
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          insertResizableImage(event.target.result);
+        };
+        reader.readAsDataURL(files[0]);
+      }
+    });
+
+    // Изменение размера картинки (Resizing)
+    let currentResizeWrapper = null;
+    let startX = 0;
+    let startWidth = 0;
+
+    editor.addEventListener('mousedown', (e) => {
+      if (e.target.classList.contains('resize-handle')) {
+        e.preventDefault();
+        currentResizeWrapper = e.target.closest('.resizable-img-wrapper');
+        currentResizeWrapper.classList.add('active-resizing');
+        currentResizeWrapper.setAttribute('draggable', 'false'); // Отключаем драг на время ресайза
+        startX = e.clientX;
+        startWidth = currentResizeWrapper.offsetWidth;
+
+        document.addEventListener('mousemove', handleImageResize);
+        document.addEventListener('mouseup', stopImageResize);
+      } else if (e.target.classList.contains('btn-remove-img')) {
+        const wrapper = e.target.closest('.resizable-img-wrapper');
+        if (wrapper) {
+          wrapper.remove();
+          saveState();
+        }
+      }
+    });
+
+    function handleImageResize(e) {
+      if (!currentResizeWrapper) return;
+      const deltaX = e.clientX - startX;
+      const newWidth = Math.max(60, Math.min(startWidth + deltaX, editor.clientWidth - 30));
+      currentResizeWrapper.style.width = `${newWidth}px`;
+    }
+
+    function stopImageResize() {
+      if (currentResizeWrapper) {
+        currentResizeWrapper.classList.remove('active-resizing');
+        currentResizeWrapper.setAttribute('draggable', 'true');
+        currentResizeWrapper = null;
+        saveState();
+      }
+      document.removeEventListener('mousemove', handleImageResize);
+      document.removeEventListener('mouseup', stopImageResize);
+    }
+
+    // ========================================================
+    // SKETCH CANVAS LOGIC
+    // ========================================================
+    const sketchModal = document.getElementById('sketch-modal');
+    const canvas = document.getElementById('sketch-canvas');
+    const ctx = canvas.getContext('2d');
+    
+    let isDrawing = false;
+    let currentTool = 'pen';
+    
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    document.getElementById('btn-sketch').addEventListener('click', () => {
+      sketchModal.classList.add('active');
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+    });
+
+    document.getElementById('btn-sketch-cancel').addEventListener('click', () => {
+      sketchModal.classList.remove('active');
+    });
+
+    document.querySelectorAll('.sketch-tool').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        document.querySelectorAll('.sketch-tool').forEach(b => {
+          b.classList.remove('active', 'bg-white', 'shadow-sm');
+          b.classList.add('hover:bg-white');
+        });
+        e.currentTarget.classList.remove('hover:bg-white');
+        e.currentTarget.classList.add('active', 'bg-white', 'shadow-sm');
+        currentTool = e.currentTarget.getAttribute('data-tool');
+      });
+    });
+
+    function getMousePos(evt) {
+      const rect = canvas.getBoundingClientRect();
+      const scaleX = canvas.width / rect.width;
+      const scaleY = canvas.height / rect.height;
+      return {
+        x: (evt.clientX - rect.left) * scaleX,
+        y: (evt.clientY - rect.top) * scaleY
+      };
+    }
+
+    canvas.addEventListener('mousedown', (e) => {
+      isDrawing = true;
+      const pos = getMousePos(e);
+      ctx.beginPath();
+      ctx.moveTo(pos.x, pos.y);
+    });
+
+    canvas.addEventListener('mousemove', (e) => {
+      if (!isDrawing) return;
+      const pos = getMousePos(e);
+      
+      ctx.lineWidth = document.getElementById('sketch-size').value;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+      
+      if (currentTool === 'eraser') {
+        ctx.strokeStyle = '#ffffff';
+      } else {
+        ctx.strokeStyle = document.getElementById('sketch-color').value;
+      }
+      
+      ctx.lineTo(pos.x, pos.y);
+      ctx.stroke();
+    });
+
+    canvas.addEventListener('mouseup', () => { isDrawing = false; });
+    canvas.addEventListener('mouseout', () => { isDrawing = false; });
+
+    document.getElementById('btn-sketch-insert').addEventListener('click', () => {
+      sketchModal.classList.remove('active');
+      const dataURL = canvas.toDataURL("image/png");
+      restoreSelection();
+      
+      const html = `<div class="sketch-container" contenteditable="false"><img src="${dataURL}" alt="Sketch" /></div><p><br></p>`;
+      document.execCommand('insertHTML', false, html);
+      saveState();
+    });
+
+    function setupFloatingText(textBlock) {
+      textBlock.contentEditable = "true";
+      
+      textBlock.addEventListener('keydown', (e) => {
+        e.stopPropagation();
+        if (e.key === 'Enter' && !e.shiftKey) {
+          e.preventDefault();
+          textBlock.blur();
+        }
+      });
+      
+      textBlock.addEventListener('input', (e) => {
+        e.stopPropagation();
+      });
+
+      textBlock.addEventListener('blur', () => {
+        if (!textBlock.innerText.trim()) {
+          textBlock.remove();
+        }
+        saveState();
+      });
+    }
+
+    editor.addEventListener('dblclick', function(e) {
+      if (e.target.tagName === 'IMG' && e.target.parentElement.classList.contains('sketch-container')) {
+        const container = e.target.parentElement;
+        const rect = container.getBoundingClientRect();
+        
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        
+        const textBlock = document.createElement('div');
+        textBlock.className = 'floating-text';
+        textBlock.style.left = `${Math.max(4, x - 10)}px`;
+        textBlock.style.top = `${Math.max(4, y - 12)}px`;
+        
+        setupFloatingText(textBlock);
+        
+        container.appendChild(textBlock);
+        textBlock.focus();
+        saveState();
+      }
+    });
+
+    // ========================================================
+    // ЛОГИКА АУДИОЗАМЕТОК
+    // ========================================================
+    let mediaRecorder = null;
+    let audioChunks = [];
+    let isRecording = false;
+    let audioRecordTargetRange = null;
+
+    const btnAudioRecord = document.getElementById('btn-audio-record');
+    const audioRecordLabel = document.getElementById('audio-record-label');
+
+    btnAudioRecord.addEventListener('click', async (e) => {
+      e.preventDefault();
+
+      if (!isRecording) {
+        restoreSelection();
+        const sel = window.getSelection();
+        if (sel.rangeCount > 0 && editor.contains(sel.anchorNode)) {
+          audioRecordTargetRange = sel.getRangeAt(0).cloneRange();
+        } else {
+          editor.focus();
+          const range = document.createRange();
+          range.selectNodeContents(editor);
+          range.collapse(false);
+          audioRecordTargetRange = range;
+        }
+
+        try {
+          const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+          startRecording(stream);
+        } catch (err) {
+          alert('Доступ к микрофону отклонен или микрофон не найден: ' + err.message);
+        }
+      } else {
+        stopRecording();
+      }
+    });
+
+    function startRecording(stream) {
+      audioChunks = [];
+      const mimeType = MediaRecorder.isTypeSupported('audio/webm') ? 'audio/webm' : 'audio/mp4';
+      mediaRecorder = new MediaRecorder(stream, { mimeType });
+
+      mediaRecorder.ondataavailable = (e) => {
+        if (e.data.size > 0) audioChunks.push(e.data);
+      };
+
+      mediaRecorder.onstop = () => {
+        stream.getTracks().forEach(track => track.stop());
+
+        const audioBlob = new Blob(audioChunks, { type: mediaRecorder.mimeType });
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          const base64Audio = reader.result;
+          insertAudioChip(base64Audio);
+        };
+        reader.readAsDataURL(audioBlob);
+      };
+
+      mediaRecorder.start();
+      isRecording = true;
+      btnAudioRecord.classList.add('bg-red-100', 'animate-pulse');
+      audioRecordLabel.textContent = 'Stop (0s)';
+
+      let seconds = 0;
+      btnAudioRecord.recordInterval = setInterval(() => {
+        seconds++;
+        audioRecordLabel.textContent = `Stop (${seconds}s)`;
+      }, 1000);
+    }
+
+    function stopRecording() {
+      if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+        mediaRecorder.stop();
+      }
+      isRecording = false;
+      clearInterval(btnAudioRecord.recordInterval);
+      btnAudioRecord.classList.remove('bg-red-100', 'animate-pulse');
+      audioRecordLabel.textContent = 'Audio';
+    }
+
+    function insertAudioChip(base64Audio) {
+      if (audioRecordTargetRange) {
+        const sel = window.getSelection();
+        sel.removeAllRanges();
+        sel.addRange(audioRecordTargetRange);
+      } else {
+        restoreSelection();
+      }
+
+      const timestamp = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      const chipHtml = `
+        <span class="audio-note-chip" contenteditable="false">
+          <span>🎙️ ${timestamp}</span>
+          <audio controls src="${base64Audio}" preload="metadata"></audio>
+          <span class="delete-audio-btn" title="Удалить запись">&times;</span>
+        </span>&nbsp;
+      `;
+
+      document.execCommand('insertHTML', false, chipHtml);
+      saveState();
+    }
+
+    editor.addEventListener('click', (e) => {
+      if (e.target.classList.contains('delete-audio-btn')) {
+        const chip = e.target.closest('.audio-note-chip');
+        if (chip) {
+          chip.remove();
+          saveState();
+        }
+      }
+    });
+
+    // Навешивание обработчиков на динамические элементы
+    function attachDynamicEventListeners() {
+      editor.querySelectorAll('.floating-text').forEach(setupFloatingText);
+      editor.querySelectorAll('.resizable-img-wrapper').forEach(makeImageWrapperDraggable);
+    }
+
+    attachDynamicEventListeners();
+  </script>
+</body>
+</html>
