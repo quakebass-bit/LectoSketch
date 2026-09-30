@@ -17,7 +17,7 @@
 ## 🚀 Live Demo
 
 Try it directly in your browser:
-👉 **[Open Live Demo](https://quakebass-git.github.io/lectosketch/)** *(replace with your GitHub Pages URL)*
+👉 **[Open Live Demo](https://quakebass-bit.github.io/LectoSketch/)** *(replace with your GitHub Pages URL)*
 
 ## 📦 Getting Started
 
@@ -25,7 +25,7 @@ LectoSketch runs entirely in the browser without Node.js, bundlers, or build ste
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/quakebass-git/lectosketch.git
+   git clone https://github.com/quakebass-bit/LectoSketch.git
    ```
 2. Open `index.html` in any modern web browser (Chrome, Firefox, Edge, Safari).
 
