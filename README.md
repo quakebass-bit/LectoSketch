@@ -1,6 +1,6 @@
 # LectoSketch 📝🎙️
 
-> A lightweight, zero-dependency in-browser multimedia notebook designed for fast lecture notes, sketches, tables, and voice memos.
+> A lightweight, zero-dependency in-browser multimedia notebook designed for fast lecture notes, sketches, tables, and voice memos. Works in desktop browsers.
 
 ![LectoSketch Preview](screenshots/demo-sketch.png)
 
